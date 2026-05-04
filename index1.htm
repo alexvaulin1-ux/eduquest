@@ -136,6 +136,32 @@
       animation: spin 0.6s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+    }
+    .progress-table th, .progress-table td {
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 0.6rem 0.5rem;
+      text-align: center;
+    }
+    .progress-table th {
+      background: rgba(100, 110, 200, 0.3);
+      font-weight: 600;
+    }
+    .progress-table td.done {
+      background: rgba(80, 200, 120, 0.25);
+      color: #a0ffb0;
+    }
+    .progress-table td.not-done {
+      background: rgba(200, 80, 80, 0.2);
+      color: #ffaaaa;
+    }
+    .progress-table td.highlight-row {
+      font-weight: bold;
+    }
   </style>
   <!-- ========== КОНЕЦ СТИЛЕЙ ========== -->
 </head>
@@ -408,19 +434,18 @@ authDomain: "angl-729aa.firebaseapp.com",
     }
 
     // УЧИТЕЛЬ
+        // УЧИТЕЛЬ
     async function renderTeacherDashboard(container) {
       const tasksSnapshot = await db.collection('tasks')
         .where('creator', '==', currentUser.uid)
         .get();
       const myTasks = tasksSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Получить всех студентов
       const usersSnapshot = await db.collection('users')
         .where('role', '==', 'student')
         .get();
       const students = usersSnapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
 
-      // Прогресс всех студентов (все записи прогресса)
       const allProgressSnapshot = await db.collection('progress').get();
       const progressMap = {};
       allProgressSnapshot.docs.forEach(doc => {
@@ -429,7 +454,11 @@ authDomain: "angl-729aa.firebaseapp.com",
         if (data.completed) progressMap[data.userId].add(data.taskId);
       });
 
-      const totalTasks = (await db.collection('tasks').get()).size;
+      const levelsSnapshot = await db.collection('levels').get();
+      const levelsMap = {};
+      levelsSnapshot.docs.forEach(doc => {
+        levelsMap[doc.id] = doc.data();
+      });
 
       container.innerHTML = `
         <h2>🛠️ Конструктор заданий</h2>
@@ -451,17 +480,44 @@ authDomain: "angl-729aa.firebaseapp.com",
           <button id="create-task-btn">➕ Создать задание</button>
         </div>
 
-        <h2>📋 Мои задания</h2>
+        <h2>📋 Мои задания (${myTasks.length})</h2>
         <div class="grid-2">
-          ${myTasks.map(t => `<div class="card"><strong>${t.title}</strong><p>${t.question}</p></div>`).join('')}
+          ${myTasks.map(t => `<div class="card"><strong>${t.title}</strong><p>${t.question}</p></div>`).join('') || '<p>Нет заданий</p>'}
         </div>
 
-        <h2>👥 Прогресс учеников</h2>
-        <div>
-          ${students.map(st => {
-            const completed = progressMap[st.uid] ? progressMap[st.uid].size : 0;
-            return `<p>${st.username || st.email} – выполнено ${completed}/${totalTasks} заданий</p>`;
-          }).join('')}
+        <h2>👥 Детальная таблица учеников</h2>
+        <div style="overflow-x:auto;">
+          <table class="progress-table">
+            <thead>
+              <tr>
+                <th>Ученик</th>
+                ${myTasks.map(t => `<th title="${t.question}">${t.title}</th>`).join('')}
+                <th>Выполнено</th>
+                <th>XP</th>
+                <th>Уровень</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${students.length === 0 ? '<tr><td colspan="100%">Нет учеников</td></tr>' : ''}
+              ${students.map(st => {
+                const completed = progressMap[st.uid] || new Set();
+                const doneCount = completed.size;
+                const lvl = levelsMap[st.uid] || { xp: 0, level: 1 };
+                return `
+                  <tr>
+                    <td class="highlight-row">${st.username || st.email}</td>
+                    ${myTasks.map(task => {
+                      const isDone = completed.has(task.id);
+                      return `<td class="${isDone ? 'done' : 'not-done'}">${isDone ? '✅' : '❌'}</td>`;
+                    }).join('')}
+                    <td><strong>${doneCount}/${myTasks.length}</strong></td>
+                    <td>${lvl.xp || 0}</td>
+                    <td>🏆${lvl.level || 1}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
       `;
 
@@ -480,7 +536,7 @@ authDomain: "angl-729aa.firebaseapp.com",
           correct: correctIndex < options.length ? correctIndex : 0,
           creator: currentUser.uid
         });
-        renderDashboard(); // обновить список
+        renderDashboard();
       });
     }
 
@@ -550,9 +606,12 @@ authDomain: "angl-729aa.firebaseapp.com",
             }
           };
 
-          await createIfNotExist(teacherEmail, password, 'teacher', 'Учитель Тест');
-          await createIfNotExist(studentEmail, password, 'student', 'Ученик Тест');
-
+                    await createIfNotExist(teacherEmail, password, 'teacher', 'Учитель Тест');
+          
+          const studentNames = ['Анна', 'Борис', 'Вика', 'Глеб', 'Диана', 'Егор', 'Женя', 'Захар', 'Ира', 'Коля'];
+          for (let i = 0; i < 10; i++) {
+            await createIfNotExist('student' + (i+1) + '@test.com', password, 'student', studentNames[i]);
+          }
           // Добавить несколько заданий (если их ещё нет)
           const existingTasks = (await db.collection('tasks').limit(1).get()).empty;
           if (existingTasks) {
