@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>EduQuest · Обучение с прогрессом</title>
+
+  <!-- ========== 1. СТИЛИ (CSS) ========== -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: linear-gradient(145deg, #1b1c2b 0%, #2a2c3f 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+    .app-container {
+      max-width: 1100px;
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 2.5rem;
+      padding: 2rem;
+      box-shadow: 0 30px 50px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #f0f0f5;
+    }
+    h1, h2 {
+      background: linear-gradient(to right, #c6a8ff, #9fd4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+    h1 { font-size: 2.2rem; }
+    h2 { font-size: 1.5rem; margin-bottom: 1.2rem; }
+    .hidden { display: none !important; }
+    .flex-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .card {
+      background: rgba(20, 22, 35, 0.7);
+      backdrop-filter: blur(12px);
+      border-radius: 1.8rem;
+      padding: 1.8rem;
+      margin: 1rem 0;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 15px 25px rgba(0,0,0,0.3);
+    }
+    button {
+      background: rgba(129, 140, 248, 0.2);
+      border: 1px solid rgba(180, 190, 255, 0.4);
+      color: #e0e7ff;
+      padding: 0.7rem 1.8rem;
+      border-radius: 3rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s;
+      letter-spacing: 0.3px;
+      font-size: 0.95rem;
+    }
+    button:hover {
+      background: rgba(139, 150, 255, 0.4);
+      border-color: #b8c6ff;
+      color: white;
+      box-shadow: 0 0 18px rgba(150,170,255,0.5);
+    }
+    button.danger {
+      border-color: rgba(255, 120, 120, 0.5);
+      background: rgba(255, 90, 90, 0.15);
+    }
+    input, select, textarea {
+      background: rgba(10, 12, 22, 0.7);
+      border: 1px solid rgba(200, 200, 240, 0.25);
+      border-radius: 2rem;
+      padding: 0.8rem 1.2rem;
+      color: white;
+      font-size: 0.95rem;
+      width: 100%;
+      margin: 0.5rem 0;
+      outline: none;
+      transition: 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #b1adff;
+      box-shadow: 0 0 12px #6b6bff55;
+    }
+    .btn-group {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .level-bar {
+      height: 12px;
+      background: #2e3047;
+      border-radius: 20px;
+      margin: 0.7rem 0;
+      overflow: hidden;
+    }
+    .level-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #f5b042, #ffd966);
+      border-radius: 20px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.2rem;
+    }
+    .answer-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.4rem 0;
+    }
+    .spinner {
+      display: inline-block;
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <!-- ========== КОНЕЦ СТИЛЕЙ ========== -->
+</head>
+<body>
+<div class="app-container" id="app">
+
+  <!-- ========== 2. HTML-РАЗМЕТКА ========== -->
+  <!-- Экран авторизации -->
+  <div id="auth-screen">
+    <h1>🎓 EduQuest</h1>
+    <p style="margin-bottom:1.5rem;">Войдите или создайте аккаунт</p>
+    <div class="card">
+      <div class="flex-row" style="justify-content:center;">
+        <button id="show-login-btn">🔐 Вход</button>
+        <button id="show-register-btn">✨ Регистрация</button>
+      </div>
+
+      <!-- Форма входа -->
+      <div id="login-form" class="hidden" style="margin-top:1.5rem;">
+        <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+        <input type="password" id="login-password" placeholder="Пароль">
+        <button id="login-submit">Войти</button>
+        <p style="font-size:0.8rem; margin-top:0.7rem; color:#aaa;">
+          Тестовые: teacher@test.com / 123456<br>student@test.com / 123456<br>dev@test.com / admin123
+        </p>
+      </div>
+
+      <!-- Форма регистрации -->
+      <div id="register-form" class="hidden" style="margin-top:1.5rem;">
+        <input type="text" id="reg-username" placeholder="Имя (как будут видеть)">
+        <input type="email" id="reg-email" placeholder="Email">
+        <input type="password" id="reg-password" placeholder="Пароль (минимум 6 символов)">
+        <select id="reg-role">
+          <option value="student">Ученик</option>
+          <option value="teacher">Учитель</option>
+          <option value="dev">Разработчик</option>
+        </select>
+        <button id="register-submit">Создать аккаунт</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Основной интерфейс (после входа) -->
+  <div id="main-screen" class="hidden">
+    <div class="flex-row" style="justify-content: space-between; align-items: center;">
+      <h1 id="welcome-title">📘 EduQuest</h1>
+      <div>
+        <span id="user-badge" style="background:#3b3f6b; padding:0.4rem 1.2rem; border-radius:2rem;"></span>
+        <button id="logout-btn" class="danger" style="margin-left:1rem;">Выйти</button>
+      </div>
+    </div>
+    <div id="role-dashboard" class="card" style="margin-top:1.5rem;">
+      <div style="text-align:center; padding:2rem;"><span class="spinner"></span> Загрузка...</div>
+    </div>
+  </div>
+  <!-- ========== КОНЕЦ РАЗМЕТКИ ========== -->
+
+</div>
+
+<!-- ========== 3. JAVASCRIPT + FIREBASE ========== -->
+<!-- Подключаем Firebase SDK (compat-версии для простоты) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  (function() {
+    // ⚠️ ЗАМЕНИТЕ НА ВАШ КОНФИГ ИЗ КОНСОЛИ FIREBASE
+   const firebaseConfig = {
+ apiKey: "AIzaSyBLHy-NhO4Nh2zNFDd-NYryv2P44IFjjiA",
+authDomain: "angl-729aa.firebaseapp.com",
+ projectId: "angl-729aa",
+ storageBucket: "angl-729aa.firebasestorage.app",
+ messagingSenderId: "886996492977",
+ appId: "1:886996492977:web:1afdb3d83f048d639f3890",
+ measurementId: "G-0EPG8ZSX96"
+};
+    // Инициализация Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Глобальное состояние
+    let currentUser = null;   // объект пользователя из Firebase Auth
+    let userProfile = null;   // документ из Firestore (роль, имя)
+
+    // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ UI =====
+    function showAuthScreen() {
+      document.getElementById('auth-screen').classList.remove('hidden');
+      document.getElementById('main-screen').classList.add('hidden');
+    }
+
+    function showMainScreen() {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('main-screen').classList.remove('hidden');
+    }
+
+    // ===== РАБОТА С РОЛЬЮ ПОЛЬЗОВАТЕЛЯ =====
+    async function loadUserProfile(uid) {
+      const doc = await db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        userProfile = doc.data();
+        userProfile.uid = uid;
+        currentUser = auth.currentUser;
+        updateHeader();
+        renderDashboard();
+      } else {
+        // Если документа нет – ошибка
+        alert('Профиль не найден. Обратитесь к администратору.');
+        await auth.signOut();
+        showAuthScreen();
+      }
+    }
+
+    function updateHeader() {
+      if (!userProfile) return;
+      document.getElementById('welcome-title').innerText = `📘 EduQuest · ${userProfile.username || 'Пользователь'}`;
+      const roleMap = {
+        teacher: '👩‍🏫 Учитель',
+        student: '🎒 Ученик',
+        dev: '⚙️ Разработчик'
+      };
+      document.getElementById('user-badge').innerText = roleMap[userProfile.role] || userProfile.role;
+    }
+
+    // ===== УРОВНИ И ОПЫТ =====
+    async function getLevelData(uid) {
+      const doc = await db.collection('levels').doc(uid).get();
+      if (doc.exists) return doc.data();
+      // инициализация, если нет
+      const init = { xp: 0, level: 1 };
+      await db.collection('levels').doc(uid).set(init, { merge: true });
+      return init;
+    }
+
+    async function addXp(uid, amount = 20) {
+      const levelRef = db.collection('levels').doc(uid);
+      await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(levelRef);
+        let data = doc.exists ? doc.data() : { xp: 0, level: 1 };
+        data.xp = (data.xp || 0) + amount;
+        const xpNeeded = data.level * 100;
+        if (data.xp >= xpNeeded) {
+          data.level += 1;
+          data.xp -= xpNeeded;
+        }
+        transaction.set(levelRef, data, { merge: true });
+      });
+    }
+
+    function renderLevelProgress(levelData) {
+      const xpNeeded = levelData.level * 100;
+      const percent = Math.min(100, ((levelData.xp || 0) / xpNeeded) * 100);
+      return `
+        <div style="display:flex; justify-content:space-between;">
+          <span>🏆 Уровень ${levelData.level}</span><span>${levelData.xp || 0}/${xpNeeded} XP</span>
+        </div>
+        <div class="level-bar"><div class="level-fill" style="width:${percent}%;"></div></div>
+      `;
+    }
+
+    // ===== РЕНДЕР ДАШБОРДОВ ПО РОЛЯМ =====
+    async function renderDashboard() {
+      const container = document.getElementById('role-dashboard');
+      container.innerHTML = '<div style="text-align:center; padding:2rem;"><span class="spinner"></span> Загрузка...</div>';
+      if (!userProfile) return;
+
+      try {
+        switch (userProfile.role) {
+          case 'student':
+            await renderStudentDashboard(container);
+            break;
+          case 'teacher':
+            await renderTeacherDashboard(container);
+            break;
+          case 'dev':
+            await renderDevDashboard(container);
+            break;
+          default:
+            container.innerHTML = '<p>Неизвестная роль</p>';
+        }
+      } catch (err) {
+        container.innerHTML = `<p style="color:#ff8a8a;">Ошибка загрузки: ${err.message}</p>`;
+      }
+    }
+
+    // УЧЕНИК
+    async function renderStudentDashboard(container) {
+      const tasksSnapshot = await db.collection('tasks').get();
+      const tasks = tasksSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Прогресс ученика
+      const progressSnapshot = await db.collection('progress')
+        .where('userId', '==', currentUser.uid)
+        .get();
+      const completedTaskIds = new Set(progressSnapshot.docs.map(d => d.data().taskId));
+
+      const levelData = await getLevelData(currentUser.uid);
+
+      container.innerHTML = `
+        <h2>📚 Мои задания</h2>
+        ${renderLevelProgress(levelData)}
+        <div class="grid-2">
+          ${tasks.map(task => {
+            const done = completedTaskIds.has(task.id);
+            return `
+              <div class="card" style="display:flex; flex-direction:column; justify-content:space-between;">
+                <strong>${task.title}</strong>
+                <p style="font-size:0.9rem; opacity:0.8;">${task.question}</p>
+                <span>${done ? '✅ Выполнено' : '⏳ Новое'}</span>
+                ${!done ? `<button class="solve-task-btn" data-taskid="${task.id}">🔍 Решать</button>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+        <div id="task-solver-area" class="card hidden"></div>
+      `;
+
+      // Привязка кнопок "Решать"
+      document.querySelectorAll('.solve-task-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const taskId = e.currentTarget.getAttribute('data-taskid');
+          const task = tasks.find(t => t.id === taskId);
+          if (task) showTaskSolver(task);
+        });
+      });
+    }
+
+    function showTaskSolver(task) {
+      const area = document.getElementById('task-solver-area');
+      area.classList.remove('hidden');
+      area.innerHTML = `
+        <h3>📝 ${task.title}</h3>
+        <p>${task.question}</p>
+        <div id="options-container">
+          ${task.options.map((opt, idx) => `
+            <div class="answer-option">
+              <input type="radio" name="answer" value="${idx}" id="opt${idx}">
+              <label for="opt${idx}">${opt}</label>
+            </div>
+          `).join('')}
+        </div>
+        <button id="submit-answer-btn">✅ Ответить</button>
+        <p id="answer-feedback" style="margin-top:0.8rem;"></p>
+      `;
+
+      document.getElementById('submit-answer-btn').addEventListener('click', async () => {
+        const selected = document.querySelector('input[name="answer"]:checked');
+        const feedback = document.getElementById('answer-feedback');
+        if (!selected) {
+          feedback.innerText = '⚠️ Выберите вариант ответа';
+          return;
+        }
+        const answerIndex = parseInt(selected.value);
+        if (answerIndex === task.correct) {
+          feedback.innerHTML = '🎉 Правильно! +20 XP';
+          // Записать прогресс
+          const progressDocId = `${currentUser.uid}_${task.id}`;
+          await db.collection('progress').doc(progressDocId).set({
+            userId: currentUser.uid,
+            taskId: task.id,
+            completed: true
+          });
+          await addXp(currentUser.uid, 20);
+          // Обновить дашборд
+          setTimeout(() => renderDashboard(), 600);
+        } else {
+          feedback.innerHTML = '❌ Неверно, попробуйте ещё';
+        }
+      });
+    }
+
+    // УЧИТЕЛЬ
+    async function renderTeacherDashboard(container) {
+      const tasksSnapshot = await db.collection('tasks')
+        .where('creator', '==', currentUser.uid)
+        .get();
+      const myTasks = tasksSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Получить всех студентов
+      const usersSnapshot = await db.collection('users')
+        .where('role', '==', 'student')
+        .get();
+      const students = usersSnapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
+
+      // Прогресс всех студентов (все записи прогресса)
+      const allProgressSnapshot = await db.collection('progress').get();
+      const progressMap = {};
+      allProgressSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (!progressMap[data.userId]) progressMap[data.userId] = new Set();
+        if (data.completed) progressMap[data.userId].add(data.taskId);
+      });
+
+      const totalTasks = (await db.collection('tasks').get()).size;
+
+      container.innerHTML = `
+        <h2>🛠️ Конструктор заданий</h2>
+        <div class="card">
+          <input type="text" id="new-task-title" placeholder="Название задания">
+          <input type="text" id="new-task-question" placeholder="Вопрос">
+          <div id="teacher-options-builder">
+            <input type="text" class="task-option" placeholder="Вариант 1">
+            <input type="text" class="task-option" placeholder="Вариант 2">
+            <input type="text" class="task-option" placeholder="Вариант 3">
+            <input type="text" class="task-option" placeholder="Вариант 4">
+          </div>
+          <select id="correct-answer-select">
+            <option value="0">Правильный: Вариант 1</option>
+            <option value="1">Правильный: Вариант 2</option>
+            <option value="2">Правильный: Вариант 3</option>
+            <option value="3">Правильный: Вариант 4</option>
+          </select>
+          <button id="create-task-btn">➕ Создать задание</button>
+        </div>
+
+        <h2>📋 Мои задания</h2>
+        <div class="grid-2">
+          ${myTasks.map(t => `<div class="card"><strong>${t.title}</strong><p>${t.question}</p></div>`).join('')}
+        </div>
+
+        <h2>👥 Прогресс учеников</h2>
+        <div>
+          ${students.map(st => {
+            const completed = progressMap[st.uid] ? progressMap[st.uid].size : 0;
+            return `<p>${st.username || st.email} – выполнено ${completed}/${totalTasks} заданий</p>`;
+          }).join('')}
+        </div>
+      `;
+
+      document.getElementById('create-task-btn').addEventListener('click', async () => {
+        const title = document.getElementById('new-task-title').value.trim();
+        const question = document.getElementById('new-task-question').value.trim();
+        const optionInputs = document.querySelectorAll('.task-option');
+        const options = Array.from(optionInputs).map(inp => inp.value.trim()).filter(o => o !== '');
+        const correctIndex = parseInt(document.getElementById('correct-answer-select').value);
+        if (!title || !question || options.length < 2) {
+          alert('Заполните название, вопрос и минимум 2 варианта');
+          return;
+        }
+        await db.collection('tasks').add({
+          title, question, options,
+          correct: correctIndex < options.length ? correctIndex : 0,
+          creator: currentUser.uid
+        });
+        renderDashboard(); // обновить список
+      });
+    }
+
+    // РАЗРАБОТЧИК
+    async function renderDevDashboard(container) {
+      const usersSnapshot = await db.collection('users').get();
+      const users = usersSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const tasksCount = (await db.collection('tasks').get()).size;
+
+      container.innerHTML = `
+        <h2>⚙️ Панель разработчика</h2>
+        <div class="card">
+          <p>Всего пользователей: ${users.length}</p>
+          <p>Заданий в системе: ${tasksCount}</p>
+          <div style="margin:1rem 0;">${users.map(u => `<span style="margin-right:1rem;">${u.username} (${u.role})</span>`).join('')}</div>
+          <button id="dev-seed-btn" class="danger">🌱 Создать демо-данные (тестовые аккаунты и задания)</button>
+        </div>
+        <h2>🛠️ Создать задание (от имени разработчика)</h2>
+        <div class="card">
+          <input type="text" id="dev-task-title" placeholder="Название">
+          <input type="text" id="dev-task-question" placeholder="Вопрос">
+          <div id="dev-options">
+            <input type="text" class="dev-opt" placeholder="Вариант 1">
+            <input type="text" class="dev-opt" placeholder="Вариант 2">
+            <input type="text" class="dev-opt" placeholder="Вариант 3">
+            <input type="text" class="dev-opt" placeholder="Вариант 4">
+          </div>
+          <select id="dev-correct">
+            <option value="0">Правильный 1</option><option value="1">2</option><option value="2">3</option><option value="3">4</option>
+          </select>
+          <button id="dev-create-btn">➕ Создать</button>
+        </div>
+      `;
+
+      document.getElementById('dev-create-btn').addEventListener('click', async () => {
+        const title = document.getElementById('dev-task-title').value.trim();
+        const question = document.getElementById('dev-task-question').value.trim();
+        const opts = Array.from(document.querySelectorAll('.dev-opt')).map(i => i.value.trim()).filter(o => o);
+        const corr = parseInt(document.getElementById('dev-correct').value);
+        if (!title || !question || opts.length < 2) return alert('Заполните поля');
+        await db.collection('tasks').add({
+          title, question, options: opts,
+          correct: corr < opts.length ? corr : 0,
+          creator: currentUser.uid
+        });
+        renderDashboard();
+      });
+
+      // Кнопка заполнения тестовыми данными
+      document.getElementById('dev-seed-btn').addEventListener('click', async () => {
+        if (!confirm('Создать демо-аккаунты teacher@test.com, student@test.com и задания?')) return;
+        try {
+          // Создать пользователей в Auth (если не существуют)
+          const teacherEmail = 'teacher@test.com';
+          const studentEmail = 'student@test.com';
+          const password = '123456';
+
+          // Удаляем предыдущие (необязательно), проще проверить существование
+          const createIfNotExist = async (email, pwd, role, username) => {
+            try {
+              const userCred = await auth.createUserWithEmailAndPassword(email, pwd);
+              await db.collection('users').doc(userCred.user.uid).set({ username, email, role });
+            } catch (e) {
+              if (e.code === 'auth/email-already-in-use') {
+                console.log(`${email} уже существует`);
+              } else throw e;
+            }
+          };
+
+          await createIfNotExist(teacherEmail, password, 'teacher', 'Учитель Тест');
+          await createIfNotExist(studentEmail, password, 'student', 'Ученик Тест');
+
+          // Добавить несколько заданий (если их ещё нет)
+          const existingTasks = (await db.collection('tasks').limit(1).get()).empty;
+          if (existingTasks) {
+            const teacherUid = (await auth.fetchSignInMethodsForEmail(teacherEmail)).length ? 
+              (await db.collection('users').where('email', '==', teacherEmail).get()).docs[0]?.id : null;
+            if (teacherUid) {
+              await db.collection('tasks').add({
+                title: 'Столица Франции',
+                question: 'Какая столица Франции?',
+                options: ['Лондон', 'Париж', 'Берлин', 'Мадрид'],
+                correct: 1,
+                creator: teacherUid
+              });
+              await db.collection('tasks').add({
+                title: '2+2',
+                question: 'Сколько будет 2+2?',
+                options: ['3', '4', '5', '22'],
+                correct: 1,
+                creator: teacherUid
+              });
+            }
+          }
+          alert('Демо-данные готовы! Выйдите и войдите под teacher@test.com / 123456 или student@test.com / 123456');
+        } catch (err) {
+          alert('Ошибка: ' + err.message);
+        }
+      });
+    }
+
+    // ===== АВТОРИЗАЦИЯ =====
+    document.getElementById('show-login-btn').addEventListener('click', () => {
+      document.getElementById('login-form').classList.remove('hidden');
+      document.getElementById('register-form').classList.add('hidden');
+    });
+    document.getElementById('show-register-btn').addEventListener('click', () => {
+      document.getElementById('register-form').classList.remove('hidden');
+      document.getElementById('login-form').classList.add('hidden');
+    });
+
+    document.getElementById('login-submit').addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (e) {
+        alert('Ошибка входа: ' + e.message);
+      }
+    });
+
+    document.getElementById('register-submit').addEventListener('click', async () => {
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+      const role = document.getElementById('reg-role').value;
+      if (!username || !email || password.length < 6) {
+        alert('Заполните все поля (пароль минимум 6 символов)');
+        return;
+      }
+      try {
+        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+        // Сохранить профиль в Firestore
+        await db.collection('users').doc(userCred.user.uid).set({
+          username, email, role
+        });
+      } catch (e) {
+        alert('Ошибка регистрации: ' + e.message);
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await auth.signOut();
+    });
+
+    // Слушатель состояния аутентификации
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        await loadUserProfile(user.uid);
+        showMainScreen();
+      } else {
+        currentUser = null;
+        userProfile = null;
+        showAuthScreen();
+      }
+    });
+
+    // Стартовый экран
+    showAuthScreen();
+  })();
+</script>
+<!-- ========== КОНЕЦ СКРИПТА ========== -->
+
+</body>
+</html>
